@@ -3,7 +3,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(logger
   LANGUAGES CXX
-  VERSION 1.0.0
+  VERSION 1.0.1
   DESCRIPTION "A simple single instance logger"
 )
 #configure file
