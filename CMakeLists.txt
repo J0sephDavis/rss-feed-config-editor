@@ -18,7 +18,7 @@ target_include_directories(configEditor
 )
 target_link_libraries(configEditor
 	PUBLIC
-		logger
+		liblogger
 		rapidxml
 )
 
