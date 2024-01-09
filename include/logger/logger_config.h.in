@@ -3,5 +3,7 @@
 
 #cmakedefine PROJECT_VERSION "@PROJECT_VERSION@"
 #cmakedefine LOG_FOLDER "@LOG_FOLDER@"
+#cmakedefine LOG_PREFIX "@LOG_PREFIX@"
+#cmakedefine LOG_SUFFIX "@LOG_SUFFIX@"
 
 #endif

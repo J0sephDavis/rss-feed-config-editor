@@ -9,7 +9,6 @@
 #include <queue>
 #include <logger_config.h>
 //
-namespace rssfeed {
 //begin namespace
 enum logLevel_t {
 	logDEBUG, 	//
@@ -47,6 +46,4 @@ class logger {
 		std::mutex queue_write;
 };
 static logger& log = logger::getInstance(logTRACE);
-//end namespace
-}
 #endif

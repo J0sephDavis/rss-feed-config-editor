@@ -2,8 +2,7 @@
 #define RSS_LOGGER_IMPLEMENT
 #include <logger.hh>
 
-namespace rssfeed {
-	namespace fs = std::filesystem;
+namespace fs = std::filesystem;
 logger& logger::getInstance(logLevel_t level) {
 	//https://stackoverflow.com/questions/335369/finding-c-static-initialization-order-problems/335746#335746
 	//Take a look at destruction problems in that thread
@@ -15,8 +14,16 @@ logger::~logger() {
 	send("logger::~logger", logTRACE);
 	os << std::endl; //flush
 	std::time_t time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+#ifndef LOG_PREFIX
+	const std::string log_prefix = LOG_PREFIX;
+#else
 	const std::string log_prefix = "rss-feed-";
+#endif
+#ifndef LOG_SUFFIX
+	const std::string log_suffix = LOG_SUFFIX;
+#else
 	const std::string log_suffix = ".log";
+#endif
 	//
 	std::stringstream datetime;
 	datetime << std::put_time(std::localtime(&time), "%Y-%m-%d_%H-%M");
@@ -96,7 +103,5 @@ void logger::send(std::string message, logLevel_t level) {
 #endif
 		messages.push(std::move(tmp_output));
 	}
-}
-//end namespace
 }
 #endif
