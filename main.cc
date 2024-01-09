@@ -77,7 +77,6 @@ int main(void) {
 			entry_node;
 			entry_node = entry_node->next_sibling()) {
 		feed_entry tmp_entry;
-		//
 		tmp_entry.s_fileName(
 			entry_node->first_node("feedFileName")->value()
 		);
@@ -93,7 +92,6 @@ int main(void) {
 		tmp_entry.s_regex(
 			entry_node->first_node("expr")->value()
 		);
-		//
 		entries.emplace_back(std::move(tmp_entry));
 	}
 	// print configs
