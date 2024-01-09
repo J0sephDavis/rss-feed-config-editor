@@ -17,19 +17,10 @@ target_include_directories(configEditor
 	"${PROJECT_BINARY_DIR}"
 )
 target_link_libraries(configEditor
-	PRIVATE
+	PUBLIC
 		logger
 		rapidxml
 )
-
-option(PRINT_LOGS "Print Logs to STDOUT" OFF)
-if (PRINT_LOGS)
-	message("Print is on")
-	target_compile_definitions(RSS-Feed PRIVATE COUT_LOG=1)
-else()
-	message("Print is off")
-	target_compile_definitions(RSS-Feed PRIVATE COUT_LOG=0)
-endif()
 
 set_target_properties(configEditor PROPERTIES CXX_STANDARD 20)
 target_compile_options(configEditor PUBLIC -Werror -Wextra -Wpedantic -std=c++20)
