@@ -2,6 +2,7 @@
 #define RSS_LOGGER_IMPLEMENT
 #include <logger.hh>
 
+namespace libLogger {
 namespace fs = std::filesystem;
 logger& logger::getInstance(logLevel_t level) {
 	//https://stackoverflow.com/questions/335369/finding-c-static-initialization-order-problems/335746#335746
@@ -103,5 +104,6 @@ void logger::send(std::string message, logLevel_t level) {
 #endif
 		messages.push(std::move(tmp_output));
 	}
+}
 }
 #endif

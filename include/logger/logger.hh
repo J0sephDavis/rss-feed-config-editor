@@ -10,6 +10,7 @@
 #include <logger_config.h>
 //
 //begin namespace
+namespace libLogger {
 enum logLevel_t {
 	logDEBUG, 	//
 	logTRACE, 	//trace exeuction across project. What logic was done
@@ -45,5 +46,6 @@ class logger {
 		std::queue<std::ostringstream>  messages;
 		std::mutex queue_write;
 };
-static logger& log = logger::getInstance(logTRACE);
+static logger& log = logger::getInstance(logDEBUG);
+}
 #endif
