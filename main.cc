@@ -1,6 +1,6 @@
 #include <logger.cc>
+#include <rapidxml.hpp>
 
 int main(void) {
-	libLogger::log.debug("TEST");
 	return 0;
 }
