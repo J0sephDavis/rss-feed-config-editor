@@ -1,15 +1,18 @@
 #include <cstdlib>
+#include <ftxui/dom/node.hpp>
+#include <ftxui/screen/screen.hpp>
 #include <logger.cc>
 #include <rapidxml.hpp>
 #include <rapidxml_utils.hpp>
+#include <rapidxml_print.hpp>
 #include <vector>
+#include <ftxui/dom/table.hpp>
+#include <ftxui/component/component.hpp>
+#include <ftxui/dom/elements.hpp>
 using namespace libLogger;
+using namespace ftxui;
 namespace rx = rapidxml;
 class feed_entry {
-	public: //CONSTRUCTORS
-		feed_entry() {
-			return;
-		};
 	public: //SETTERS
 		void s_fileName(std::string file_name) {
 			this->fileName = file_name;
@@ -43,6 +46,16 @@ class feed_entry {
 			return url;
 		}
 	public: //other
+		//returns a vector of elements with the entry descriptors
+		std::vector<Element> to_row() {
+			std::vector<Element> row;
+			row.push_back(text(title));
+			row.push_back(text(fileName));
+			row.push_back(text(regex));
+		//	row.push_back(text(history));
+		//	row.push_back(text(url));
+			return row;
+		};
 		friend std::ostream& operator<<(std::ostream& os,
 				const feed_entry& entry) {
 			os << "TITLE: " << entry.g_title() << "\n"
@@ -94,9 +107,28 @@ int main(void) {
 		);
 		entries.emplace_back(std::move(tmp_entry));
 	}
-	// print configs
+	// prepare table
+	std::vector<std::vector<Element>> table_data;
+	table_data.push_back({text("Title"),
+			text("File Name"),
+			text("Regular Expression")});
 	for (auto e : entries) {
-		std::cout << e << "\n---\n";
+//		std::cout << e << "\n---\n";
+		table_data.push_back(e.to_row());
 	}
+	auto table = Table(std::move(table_data));
+	// decorate table
+	table.SelectAll().Border(HEAVY);
+	table.SelectAll().SeparatorVertical(LIGHT);
+	table.SelectRow(0).Border(DOUBLE);
+	// render screen
+	auto document = table.Render();
+	auto screen = Screen::Create(Dimension::Fit(document));
+	Render(screen, document);
+	screen.Print();
+	std::cout << std::endl;
+	std::ofstream new_config("modified_xml");
+	new_config << config_document; //rapidxml_print.hpp
+
 	return 0;
 }
