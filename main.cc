@@ -44,21 +44,11 @@ class feed_entry {
 		void r_history() { this->tmp_history = history; }
 		void r_url() { this->tmp_url = url; }
 	public: //GETTERS
-		std::string g_fileName() const {
-			return fileName;
-		}
-		std::string g_title() const {
-			return title;
-		}
-		std::string g_regex() const {
-			return regex;
-		}
-		std::string g_history() const {
-			return history;
-		}
-		std::string g_url() const {
-			return url;
-		}
+		std::string g_fileName() const { return fileName; }
+		std::string g_title() const { return title; }
+		std::string g_regex() const { return regex; }
+		std::string g_history() const { return history; }
+		std::string g_url() const { return url; }
 		const rx::xml_node<>& g_xmlRef() const {
 			return xml_reference;
 		}
