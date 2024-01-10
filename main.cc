@@ -188,6 +188,13 @@ int main(void) {
 	// used to establish hierarchy of components
 	Component main_component = Container::Horizontal({
 		tab_menu, tabs
+	}) | CatchEvent([&](Event event) {
+		//prevent quitting while in input component
+		if (event == Event::Character('q') && !tabs->Focused()) {
+			screen.ExitLoopClosure()();
+			return true;
+		}
+		else return false;
 	});
 	//the final rendered component
 	auto x =  Renderer(main_component, [&](){
