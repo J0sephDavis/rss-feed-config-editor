@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/component/screen_interactive.hpp>
+#include <functional>
 #include <logger.cc>
 #include <rapidxml.hpp>
 #include <rapidxml_utils.hpp>
@@ -45,6 +46,22 @@ class feed_entry {
 				log.debug("HISTORY:" + history);
 			if (changed_url)
 				log.debug("URL:" + url);
+		}
+	public: //resets
+		void r_fileName() {
+			this->tmp_fileName = fileName;
+		}
+		void r_title() {
+			this->tmp_title = title;
+		}
+		void r_regex() {
+			this->tmp_regex = regex;
+		}
+		void r_history() {
+			this->tmp_history = history;
+		}
+		void r_url() {
+			this->tmp_url = url;
 		}
 	public: //updaters
 		void u_fileName() {
@@ -168,36 +185,61 @@ int main(void) {
 			Container::Horizontal({
 				Input(&(entry.tmp_title), entry.g_title()),
 				Button("Update", [&](){ (&entry)->u_title();}),
+				Button("Reset", [&](){ (&entry)->r_title();}),
 			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_fileName), entry.g_fileName()),
 				Button("Update", [&](){ (&entry)->u_fileName();}),
+				Button("Reset", [&](){ (&entry)->r_fileName();}),
 			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_regex), entry.g_regex()),
 				Button("Update", [&](){ (&entry)->u_regex();}),
+				Button("Reset", [&](){ (&entry)->r_regex();}),
 			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_history), entry.g_history()),
 				Button("Update", [&](){ (&entry)->u_history();}),
+				Button("Reset", [&](){ (&entry)->r_history();}),
 			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_url), entry.g_url()),
 				Button("Update", [&](){ (&entry)->u_url();}),
+				Button("Reset", [&](){ (&entry)->r_url();}),
 			}, &editor_menu_column),
 		}, &editor_menu_row);
 		tab_data.push_back(std::move(return_value));
 		tab_menu_entries.push_back(entry.g_title());
 	}
-	// bundle tabs
+	// create the final tab (adds a new row)
+	int counter = 0;
 	int tab_selector = 0;
+	// bundle tabs
 	auto tabs = Container::Tab(tab_data,&tab_selector);
 	Component tab_menu = Menu(&tab_menu_entries, &tab_selector);
+	// button to add config tab
+	std::function<void()> newfunc([&]{
+		log.trace(">new_func");
+		tab_data.emplace_back(Container::Vertical({
+			Renderer([counter](){
+				return text("new tab #"
+						+ std::to_string(counter));
+			})
+		}));
+		tabs = Container::Tab(tab_data, &tab_selector);
+		tab_menu_entries.push_back("new tab #" + std::to_string(counter++));
+		return;
+	});
+	auto add_config_button = Button("Create config?", newfunc);
 	// to render the screen interactively
 	auto screen = ScreenInteractive::FitComponent();
 	// used to establish hierarchy of components
 	Component main_component = Container::Horizontal({
-		tab_menu, tabs
+			Container::Vertical({
+				tab_menu,
+				add_config_button,
+			}),
+			tabs
 	}) | CatchEvent([&](Event event) {
 		//prevent quitting while in input component
 		if (event == Event::Character('q') && !tabs->Focused()) {
@@ -211,7 +253,11 @@ int main(void) {
 	//the final rendered component
 	auto x =  Renderer(main_component, [&](){
 		return hbox({
+			vbox({
 			tab_menu->Render(),
+			separator(),
+			add_config_button->Render(),
+			}),
 			separator(),
 			tabs->Render(),
 		}) | border;
