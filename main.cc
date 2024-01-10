@@ -1,6 +1,6 @@
 #include <cstdlib>
 #include <ftxui/dom/node.hpp>
-#include <ftxui/screen/screen.hpp>
+#include <ftxui/component/screen_interactive.hpp>
 #include <logger.cc>
 #include <rapidxml.hpp>
 #include <rapidxml_utils.hpp>
@@ -13,6 +13,47 @@ using namespace libLogger;
 using namespace ftxui;
 namespace rx = rapidxml;
 class feed_entry {
+	public:
+		feed_entry(rx::xml_node<>& reference):
+			xml_reference(reference)
+		{
+			//
+		}
+		~feed_entry() {
+			log.debug("feed_entry::deconstructor");
+			if (changed_fileName)
+				log.debug("FILE:" + fileName);
+			if (changed_title)
+				log.debug("TITLE:" + title);
+			if (changed_regex)
+				log.debug("REGEX:" + regex);
+			if (changed_history)
+				log.debug("HISTORY:" + history);
+			if (changed_url)
+				log.debug("URL:" + url);
+			log.debug("return feed_entry::deconstructor");
+		}
+	public: //updaters
+		void u_fileName() {
+			this->fileName = tmp_fileName;
+			changed_fileName = true;
+		}
+		void u_title() {
+			this->title = tmp_title;
+			changed_title = true;
+		}
+		void u_regex() {
+			this->regex = tmp_regex;
+			changed_regex = true;
+		}
+		void u_history() {
+			this->history = tmp_history;
+			changed_history = true;
+		}
+		void u_url() {
+			this->url = tmp_url;
+			changed_url = true;
+		}
 	public: //SETTERS
 		void s_fileName(std::string file_name) {
 			this->fileName = file_name;
@@ -45,17 +86,10 @@ class feed_entry {
 		std::string g_url() const {
 			return url;
 		}
+		const rx::xml_node<>& g_xmlRef() const {
+			return xml_reference;
+		}
 	public: //other
-		//returns a vector of elements with the entry descriptors
-		std::vector<Element> to_row() {
-			std::vector<Element> row;
-			row.push_back(text(title));
-			row.push_back(text(fileName));
-			row.push_back(text(regex));
-		//	row.push_back(text(history));
-		//	row.push_back(text(url));
-			return row;
-		};
 		friend std::ostream& operator<<(std::ostream& os,
 				const feed_entry& entry) {
 			os << "TITLE: " << entry.g_title() << "\n"
@@ -65,12 +99,26 @@ class feed_entry {
 				<< "URL: " << entry.g_url();
 			return os;
 		}
+		//tmp_xxx are used to update values
+		std::string tmp_fileName;
+		std::string tmp_title;
+		std::string tmp_regex;
+		std::string tmp_history;
+		std::string tmp_url;
+		bool changed_fileName = false;
+		bool changed_title = false;
+		bool changed_regex = false;
+		bool changed_history = false;
+		bool changed_url = false;
 	private: //DESCRIPTORS
 		std::string fileName;
 		std::string title;
 		std::string regex;
 		std::string history;
 		std::string url;
+		//changed = true if any of the descriptors are updated
+		bool changed = false; //use deconstructor to allocate the XML
+		const rx::xml_node<>& xml_reference;
 };
 int main(void) {
 	const std::string path_to_config = "/home/sooth/Documents/Code/10-19/11/04 RSS-Feed config editor/data/rss-config.xml";
@@ -89,7 +137,7 @@ int main(void) {
 	for (auto entry_node = config_document.first_node()->first_node("item");
 			entry_node;
 			entry_node = entry_node->next_sibling()) {
-		feed_entry tmp_entry;
+		feed_entry tmp_entry(*entry_node);
 		tmp_entry.s_fileName(
 			entry_node->first_node("feedFileName")->value()
 		);
@@ -107,28 +155,64 @@ int main(void) {
 		);
 		entries.emplace_back(std::move(tmp_entry));
 	}
-	// prepare table
-	std::vector<std::vector<Element>> table_data;
-	table_data.push_back({text("Title"),
-			text("File Name"),
-			text("Regular Expression")});
-	for (auto e : entries) {
-//		std::cout << e << "\n---\n";
-		table_data.push_back(e.to_row());
+	// create each tab
+	std::vector<std::string> tab_menu_entries;
+	std::vector<Component> tab_data;
+	for (auto& entry : entries) {
+		Component return_value = Container::Vertical({
+			Container::Horizontal({
+				Input(&(entry.tmp_title), entry.g_title()),
+				Button("Update", [&](){ (&entry)->u_title();}),
+			}),
+			Container::Horizontal({
+				Input(&(entry.tmp_fileName), entry.g_fileName()),
+				Button("Update", [&](){ (&entry)->u_fileName();}),
+			}),
+			Container::Horizontal({
+				Input(&(entry.tmp_regex), entry.g_regex()),
+				Button("Update", [&](){ (&entry)->u_regex();}),
+			}),
+			Container::Horizontal({
+				Input(&(entry.tmp_history), entry.g_history()),
+				Button("Update", [&](){ (&entry)->u_history();}),
+			}),
+			Container::Horizontal({
+				Input(&(entry.tmp_url), entry.g_url()),
+				Button("Update", [&](){ (&entry)->u_url();}),
+			}),
+		});
+		tab_data.push_back(std::move(return_value));
+		tab_menu_entries.push_back(entry.g_title());
 	}
-	auto table = Table(std::move(table_data));
-	// decorate table
-	table.SelectAll().Border(HEAVY);
-	table.SelectAll().SeparatorVertical(LIGHT);
-	table.SelectRow(0).Border(DOUBLE);
-	// render screen
-	auto document = table.Render();
-	auto screen = Screen::Create(Dimension::Fit(document));
-	Render(screen, document);
-	screen.Print();
-	std::cout << std::endl;
-	std::ofstream new_config("modified_xml");
-	new_config << config_document; //rapidxml_print.hpp
+	// bundle tabs
+	int tab_selector = 0;
+	auto tabs = Container::Tab(tab_data,&tab_selector);
+	Component tab_menu = Menu(&tab_menu_entries, &tab_selector);
+	// to render the screen interactively
+	auto screen = ScreenInteractive::FitComponent();
+	// used to establish hierarchy of components
+	Component main_component = Container::Horizontal({
+		tab_menu, tabs
+	});
+	//the final rendered component
+	auto x =  Renderer(main_component, [&](){
+		return vbox({
+			text("header"),
+			text(std::to_string(tab_selector)),
+			separator(),
+			hbox({
+				tab_menu->Render(),
+				separator(),
+				tabs->Render() | border,
+			}),
+			separator(),
+			text("footer"),
+		});
+	});
+	log.info("SCREEN LOOP");
+	screen.Loop(x);
+//	std::ofstream new_config("modified_xml");
+//	new_config << config_document; //rapidxml_print.hpp
 
 	return 0;
 }
