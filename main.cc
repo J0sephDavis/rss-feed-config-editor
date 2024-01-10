@@ -48,21 +48,11 @@ class feed_entry {
 				log.debug("URL:" + url);
 		}
 	public: //resets
-		void r_fileName() {
-			this->tmp_fileName = fileName;
-		}
-		void r_title() {
-			this->tmp_title = title;
-		}
-		void r_regex() {
-			this->tmp_regex = regex;
-		}
-		void r_history() {
-			this->tmp_history = history;
-		}
-		void r_url() {
-			this->tmp_url = url;
-		}
+		void r_fileName() { this->tmp_fileName = fileName; }
+		void r_title() { this->tmp_title = title; }
+		void r_regex() { this->tmp_regex = regex; }
+		void r_history() { this->tmp_history = history; }
+		void r_url() { this->tmp_url = url; }
 	public: //updaters
 		void u_fileName() {
 			this->fileName = tmp_fileName;
