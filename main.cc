@@ -218,6 +218,7 @@ int main(void) {
 	screen.Loop(x);
 	bool config_changed = false;
 	for (auto& entry : entries) {
+		log.trace("<loop> check entry for change");
 		auto& node = entry.g_xmlRef();
 		if (entry.changed_fileName || entry.changed_history || entry.changed_regex || entry.changed_url || entry.changed_title)
 			config_changed = true;
@@ -236,7 +237,7 @@ int main(void) {
 		//
 		log.debug("entry updated:" + entry.str());
 	}
-	std::ofstream new_config("modified.xml");
+	std::ofstream new_config(path_to_config);
 	new_config << config_document; //rapidxml_print.hpp
 
 	return EXIT_SUCCESS;
