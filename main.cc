@@ -87,6 +87,14 @@ class feed_entry {
 			return xml_reference;
 		}
 	public: //other
+		std::string str() {
+			std::string return_value = "TITLE: " + g_title() + "\n"
+				+ "FILE: " + g_fileName() + "\n"
+				+ "EXPR: " + g_regex() + "\n"
+				+ "HIST: " + g_history() + "\n"
+				+ "URL: " + g_url();
+			return return_value;
+		}
 		friend std::ostream& operator<<(std::ostream& os,
 				const feed_entry& entry) {
 			os << "TITLE: " << entry.g_title() << "\n"
@@ -114,7 +122,6 @@ class feed_entry {
 		std::string history;
 		std::string url;
 		//changed = true if any of the descriptors are updated
-		bool changed = false; //use deconstructor to allocate the XML
 		const rx::xml_node<>& xml_reference;
 };
 int main(void) {
@@ -148,6 +155,7 @@ int main(void) {
 			url,
 			regex,
 			history);
+		log.debug("New entry:" + entries.back().str());
 	}
 	// create each tab
 	std::vector<std::string> tab_menu_entries;
@@ -191,6 +199,8 @@ int main(void) {
 	}) | CatchEvent([&](Event event) {
 		//prevent quitting while in input component
 		if (event == Event::Character('q') && !tabs->Focused()) {
+			//TODO prompt user to save or discard changes
+			//TODO print summary of changes
 			screen.ExitLoopClosure()();
 			return true;
 		}
@@ -211,10 +221,30 @@ int main(void) {
 			text("footer"),
 		});
 	});
-	log.info("SCREEN LOOP");
+	log.trace("SCREEN LOOP");
 	screen.Loop(x);
-//	std::ofstream new_config("modified_xml");
-//	new_config << config_document; //rapidxml_print.hpp
+	bool config_changed = false;
+	for (auto& entry : entries) {
+		auto& node = entry.g_xmlRef();
+		if (entry.changed_fileName || entry.changed_history || entry.changed_regex || entry.changed_url || entry.changed_title)
+			config_changed = true;
+		else continue;
+		//
+		if (entry.changed_fileName)
+			node.first_node("feedFileName")->first_node()->value(config_document.allocate_string(entry.g_fileName().c_str()));
+		if (entry.changed_title)
+			node.first_node("title")->first_node()->value(config_document.allocate_string(entry.g_title().c_str()));
+		if (entry.changed_regex)
+			node.first_node("expr")->first_node()->value(config_document.allocate_string(entry.g_regex().c_str()));
+		if (entry.changed_history)
+			node.first_node("history")->first_node()->value(config_document.allocate_string(entry.g_history().c_str()));
+		if (entry.changed_url)
+			node.first_node("feed-url")->first_node()->value(config_document.allocate_string(entry.g_url().c_str()));
+		//
+		log.debug("entry updated:" + entry.str());
+	}
+	std::ofstream new_config("modified.xml");
+	new_config << config_document; //rapidxml_print.hpp
 
-	return 0;
+	return EXIT_SUCCESS;
 }
