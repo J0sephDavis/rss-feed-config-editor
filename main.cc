@@ -14,10 +14,24 @@ using namespace ftxui;
 namespace rx = rapidxml;
 class feed_entry {
 	public:
-		feed_entry(rx::xml_node<>& reference):
+		feed_entry(rx::xml_node<>& reference,
+				std::string _title,
+				std::string _fileName,
+				std::string _url,
+				std::string _regex,
+				std::string _history):
 			xml_reference(reference)
 		{
-			//
+			this->title = _title;
+			this->fileName = _fileName;
+			this->regex = _regex;
+			this->history = _history;
+			this->url = _url;
+			this->tmp_fileName = fileName;
+			this->tmp_title = title;
+			this->tmp_regex = regex;
+			this->tmp_history = history;
+			this->tmp_url = url;
 		}
 		~feed_entry() {
 			log.debug("feed_entry::deconstructor");
@@ -31,7 +45,6 @@ class feed_entry {
 				log.debug("HISTORY:" + history);
 			if (changed_url)
 				log.debug("URL:" + url);
-			log.debug("return feed_entry::deconstructor");
 		}
 	public: //updaters
 		void u_fileName() {
@@ -53,22 +66,6 @@ class feed_entry {
 		void u_url() {
 			this->url = tmp_url;
 			changed_url = true;
-		}
-	public: //SETTERS
-		void s_fileName(std::string file_name) {
-			this->fileName = file_name;
-		}
-		void s_title(std::string feed_title) {
-			this->title = feed_title;
-		}
-		void s_regex(std::string feed_expression) {
-			this->regex = feed_expression;
-		}
-		void s_history(std::string feed_history) {
-			this->history = feed_history;
-		}
-		void s_url(std::string feed_url) {
-			this->url = feed_url;
 		}
 	public: //GETTERS
 		std::string g_fileName() const {
@@ -134,31 +131,29 @@ int main(void) {
 	}
 	// store the config data
 	std::vector<feed_entry> entries;
+	entries.reserve(50); //if value is too low,
+			     //we waste time resizing the vector
 	for (auto entry_node = config_document.first_node()->first_node("item");
 			entry_node;
 			entry_node = entry_node->next_sibling()) {
-		feed_entry tmp_entry(*entry_node);
-		tmp_entry.s_fileName(
-			entry_node->first_node("feedFileName")->value()
-		);
-		tmp_entry.s_history(
-			entry_node->first_node("history")->value()
-		);
-		tmp_entry.s_title(
-			entry_node->first_node("title")->first_node()->value()
-		);
-		tmp_entry.s_url(
-			entry_node->first_node("feed-url")->first_node()->value()
-		);
-		tmp_entry.s_regex(
-			entry_node->first_node("expr")->value()
-		);
-		entries.emplace_back(std::move(tmp_entry));
+		log.trace("<loop> store config data");
+		std::string fileName = entry_node->first_node("feedFileName")->value();
+		std::string title = entry_node->first_node("title")->first_node()->value();
+		std::string regex = entry_node->first_node("expr")->value();
+		std::string history = entry_node->first_node("history")->value();
+		std::string url = entry_node->first_node("feed-url")->first_node()->value();
+		entries.emplace_back(*entry_node,
+			title,
+			fileName,
+			url,
+			regex,
+			history);
 	}
 	// create each tab
 	std::vector<std::string> tab_menu_entries;
 	std::vector<Component> tab_data;
 	for (auto& entry : entries) {
+		log.trace("<loop> create tab");
 		Component return_value = Container::Vertical({
 			Container::Horizontal({
 				Input(&(entry.tmp_title), entry.g_title()),
