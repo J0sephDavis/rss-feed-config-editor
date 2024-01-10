@@ -36,16 +36,6 @@ class feed_entry {
 		}
 		~feed_entry() {
 			log.debug("feed_entry::deconstructor");
-			if (changed_fileName)
-				log.debug("FILE:" + fileName);
-			if (changed_title)
-				log.debug("TITLE:" + title);
-			if (changed_regex)
-				log.debug("REGEX:" + regex);
-			if (changed_history)
-				log.debug("HISTORY:" + history);
-			if (changed_url)
-				log.debug("URL:" + url);
 		}
 	public: //resets
 		void r_fileName() { this->tmp_fileName = fileName; }
@@ -53,27 +43,6 @@ class feed_entry {
 		void r_regex() { this->tmp_regex = regex; }
 		void r_history() { this->tmp_history = history; }
 		void r_url() { this->tmp_url = url; }
-	public: //updaters
-		void u_fileName() {
-			this->fileName = tmp_fileName;
-			changed_fileName = true;
-		}
-		void u_title() {
-			this->title = tmp_title;
-			changed_title = true;
-		}
-		void u_regex() {
-			this->regex = tmp_regex;
-			changed_regex = true;
-		}
-		void u_history() {
-			this->history = tmp_history;
-			changed_history = true;
-		}
-		void u_url() {
-			this->url = tmp_url;
-			changed_url = true;
-		}
 	public: //GETTERS
 		std::string g_fileName() const {
 			return fileName;
@@ -174,27 +143,27 @@ int main(void) {
 		Component return_value = Container::Vertical({
 			Container::Horizontal({
 				Input(&(entry.tmp_title), entry.g_title()),
-				Button("Update", [&](){ (&entry)->u_title();}),
+				Checkbox("Update?", (&entry.changed_title)),
 				Button("Reset", [&](){ (&entry)->r_title();}),
 			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_fileName), entry.g_fileName()),
-				Button("Update", [&](){ (&entry)->u_fileName();}),
+				Checkbox("Update?", (&entry.changed_fileName)),
 				Button("Reset", [&](){ (&entry)->r_fileName();}),
 			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_regex), entry.g_regex()),
-				Button("Update", [&](){ (&entry)->u_regex();}),
+				Checkbox("Update?", (&entry.changed_regex)),
 				Button("Reset", [&](){ (&entry)->r_regex();}),
 			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_history), entry.g_history()),
-				Button("Update", [&](){ (&entry)->u_history();}),
+				Checkbox("Update?", (&entry.changed_history)),
 				Button("Reset", [&](){ (&entry)->r_history();}),
 			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_url), entry.g_url()),
-				Button("Update", [&](){ (&entry)->u_url();}),
+				Checkbox("Update?", (&entry.changed_url)),
 				Button("Reset", [&](){ (&entry)->r_url();}),
 			}, &editor_menu_column),
 		}, &editor_menu_row);
@@ -262,16 +231,32 @@ int main(void) {
 			config_changed = true;
 		else continue;
 		//
-		if (entry.changed_fileName)
-			node.first_node("feedFileName")->first_node()->value(config_document.allocate_string(entry.g_fileName().c_str()));
-		if (entry.changed_title)
-			node.first_node("title")->first_node()->value(config_document.allocate_string(entry.g_title().c_str()));
-		if (entry.changed_regex)
-			node.first_node("expr")->first_node()->value(config_document.allocate_string(entry.g_regex().c_str()));
-		if (entry.changed_history)
-			node.first_node("history")->first_node()->value(config_document.allocate_string(entry.g_history().c_str()));
-		if (entry.changed_url)
-			node.first_node("feed-url")->first_node()->value(config_document.allocate_string(entry.g_url().c_str()));
+		if (entry.changed_fileName) {
+			log.info("updating fileName (" + entry.g_fileName()
+					+ ") -> (" + entry.tmp_fileName + ")");
+			node.first_node("feedFileName")->first_node()->value(config_document.allocate_string(entry.tmp_fileName.c_str()));
+		}
+		if (entry.changed_title) {
+			log.info("updating title (" + entry.g_title()
+					+ ") -> (" + entry.tmp_title + ")");
+			node.first_node("title")->first_node()->value(config_document.allocate_string(entry.tmp_title.c_str()));
+		}
+		if (entry.changed_regex) {
+			log.info("updating regex (" + entry.g_regex()
+					+ ") -> (" + entry.tmp_regex + ")");
+			node.first_node("expr")->first_node()->value(config_document.allocate_string(entry.tmp_regex.c_str()));
+		}
+		if (entry.changed_history) {
+			log.info("updating history (" + entry.g_history()
+					+ ") -> (" + entry.tmp_history + ")");
+			node.first_node("history")->first_node()->value(config_document.allocate_string(entry.tmp_history.c_str()));
+		}
+		if (entry.changed_url) {
+			log.info("updating url (" + entry.g_url()
+					+ ") -> (" + entry.tmp_url + ")");
+			node.first_node("feed-url")->first_node()->value(config_document.allocate_string(entry.tmp_url.c_str()));
+
+		}
 		//
 		log.debug("entry updated:" + entry.str());
 	}
