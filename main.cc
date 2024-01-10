@@ -160,30 +160,32 @@ int main(void) {
 	// create each tab
 	std::vector<std::string> tab_menu_entries;
 	std::vector<Component> tab_data;
+	int editor_menu_column = 0;
+	int editor_menu_row = 0;
 	for (auto& entry : entries) {
 		log.trace("<loop> create tab");
 		Component return_value = Container::Vertical({
 			Container::Horizontal({
 				Input(&(entry.tmp_title), entry.g_title()),
 				Button("Update", [&](){ (&entry)->u_title();}),
-			}),
+			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_fileName), entry.g_fileName()),
 				Button("Update", [&](){ (&entry)->u_fileName();}),
-			}),
+			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_regex), entry.g_regex()),
 				Button("Update", [&](){ (&entry)->u_regex();}),
-			}),
+			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_history), entry.g_history()),
 				Button("Update", [&](){ (&entry)->u_history();}),
-			}),
+			}, &editor_menu_column),
 			Container::Horizontal({
 				Input(&(entry.tmp_url), entry.g_url()),
 				Button("Update", [&](){ (&entry)->u_url();}),
-			}),
-		});
+			}, &editor_menu_column),
+		}, &editor_menu_row);
 		tab_data.push_back(std::move(return_value));
 		tab_menu_entries.push_back(entry.g_title());
 	}
