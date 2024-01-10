@@ -208,18 +208,11 @@ int main(void) {
 	});
 	//the final rendered component
 	auto x =  Renderer(main_component, [&](){
-		return vbox({
-			text("header"),
-			text(std::to_string(tab_selector)),
+		return hbox({
+			tab_menu->Render(),
 			separator(),
-			hbox({
-				tab_menu->Render(),
-				separator(),
-				tabs->Render() | border,
-			}),
-			separator(),
-			text("footer"),
-		});
+			tabs->Render(),
+		}) | border;
 	});
 	log.trace("SCREEN LOOP");
 	screen.Loop(x);
