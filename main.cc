@@ -128,34 +128,48 @@ int main(void) {
 	std::vector<Component> tab_data;
 	int editor_menu_column = 0;
 	int editor_menu_row = 0;
+	//reset button option
+	const auto resetBtnOpt = ButtonOption::Ascii();
+	const ComponentDecorator line_item_decorator = Renderer(border);
 	for (auto& entry : entries) {
+		auto create_line_item = [&](Component input_box,
+				Component checkbox,
+				Component button) -> Component {
+			return Container::Horizontal({
+				input_box, checkbox, button
+				//Input(&(entry.tmp_title), entry.g_title()),
+				//Checkbox("Update?", (&entry.changed_title)),
+				//Button("Reset", [&](){ (&entry)->r_title();},
+				//		resetBtnOpt),
+			}, &editor_menu_column) | line_item_decorator;
+		};
 		log.trace("<loop> create tab");
 		Component return_value = Container::Vertical({
-			Container::Horizontal({
+			create_line_item(
 				Input(&(entry.tmp_title), entry.g_title()),
 				Checkbox("Update?", (&entry.changed_title)),
-				Button("Reset", [&](){ (&entry)->r_title();}),
-			}, &editor_menu_column),
-			Container::Horizontal({
+				Button("Reset", [&](){ (&entry)->r_title();}, resetBtnOpt)
+			),
+			create_line_item(
 				Input(&(entry.tmp_fileName), entry.g_fileName()),
 				Checkbox("Update?", (&entry.changed_fileName)),
-				Button("Reset", [&](){ (&entry)->r_fileName();}),
-			}, &editor_menu_column),
-			Container::Horizontal({
+				Button("Reset", [&](){ (&entry)->r_fileName();}, resetBtnOpt)
+			),
+			create_line_item(
 				Input(&(entry.tmp_regex), entry.g_regex()),
 				Checkbox("Update?", (&entry.changed_regex)),
-				Button("Reset", [&](){ (&entry)->r_regex();}),
-			}, &editor_menu_column),
-			Container::Horizontal({
+				Button("Reset", [&](){ (&entry)->r_regex();}, resetBtnOpt)
+			),
+			create_line_item(
 				Input(&(entry.tmp_history), entry.g_history()),
 				Checkbox("Update?", (&entry.changed_history)),
-				Button("Reset", [&](){ (&entry)->r_history();}),
-			}, &editor_menu_column),
-			Container::Horizontal({
+				Button("Reset", [&](){ (&entry)->r_history();}, resetBtnOpt)
+			),
+			create_line_item(
 				Input(&(entry.tmp_url), entry.g_url()),
 				Checkbox("Update?", (&entry.changed_url)),
-				Button("Reset", [&](){ (&entry)->r_url();}),
-			}, &editor_menu_column),
+				Button("Reset", [&](){ (&entry)->r_url();}, resetBtnOpt)
+			),
 		}, &editor_menu_row);
 		tab_data.push_back(std::move(return_value));
 		tab_menu_entries.push_back(entry.g_title());
