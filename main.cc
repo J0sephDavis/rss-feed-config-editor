@@ -246,6 +246,22 @@ int main(int argc, char* argv[]) {
 	auto add_config_button = Button("New Config", newfunc);
 	// to render the screen interactively
 	auto screen = ScreenInteractive::FitComponent();
+	// save & quit screen
+	bool save_changes = false;
+	bool save_quit_shown = false;
+	auto show_sq = [&]{ save_quit_shown = true; };
+	auto hide_sq = [&]{ save_quit_shown = false; };
+	auto save_quit_modal = Container::Horizontal({
+		Container::Vertical({
+			Checkbox("Save changes?", &save_changes),
+			Container::Horizontal({
+				Button("Back", hide_sq),
+				Renderer([](){
+					return emptyElement() | flex_grow;}),
+				Button("Exit!", screen.ExitLoopClosure()),
+			}),
+		})
+	}) | clear_under | border | center;
 	// used to establish hierarchy of components
 	main_component = Container::Horizontal({
 			Container::Vertical({
@@ -253,10 +269,10 @@ int main(int argc, char* argv[]) {
 				add_config_button,
 			}),
 			tabs
-	});
+	}) | Modal(save_quit_modal, &save_quit_shown);
 	//the final rendered component
 	auto main_renderer =  Renderer(main_component, [&](){
-		return hbox({
+		auto main_doc = hbox({
 			vbox({
 				tab_menu->Render(),
 				separator(),
@@ -265,12 +281,17 @@ int main(int argc, char* argv[]) {
 			separator(),
 			tabs->Render(),
 		}) | border;
+		if (save_quit_shown)
+			main_doc = dbox({
+				main_doc,
+				save_quit_modal->Render()
+			});
+		return main_doc;
 	}) | CatchEvent([&](Event event) {
 		//prevent quitting while in input component
 		if (event == Event::Character('q') && !tabs->Focused()) {
-			//TODO prompt user to save or discard changes
 			//TODO print summary of changes
-			screen.ExitLoopClosure()();
+			show_sq();
 			return true;
 		}
 		else return false;
