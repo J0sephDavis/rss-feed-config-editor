@@ -14,7 +14,7 @@
 using namespace libLogger;
 using namespace ftxui;
 namespace rx = rapidxml;
-struct basic_entry {
+struct config_fields {
 	public:
 		std::string fileName;
 		std::string title;
@@ -22,7 +22,7 @@ struct basic_entry {
 		std::string history;
 		std::string url;
 		friend std::ostream& operator<<(std::ostream& os,
-				const basic_entry& entry) {
+				const config_fields& entry) {
 			os << "TITLE: " << entry.title << "\n"
 				<< "FILE: " << entry.fileName << "\n"
 				<< "EXPR: " << entry.regex << "\n"
@@ -77,7 +77,7 @@ class config_entry {
 		}
 	public: //other
 		//tmp_xxx are used to update values
-		basic_entry changed_entry;
+		config_fields changed_entry;
 		bool update_fileName = false;
 		bool update_title = false;
 		bool update_regex = false;
@@ -85,7 +85,7 @@ class config_entry {
 		bool update_url = false;
 	private: //DESCRIPTORS
 		const rx::xml_node<>& xml_reference;
-		basic_entry original_entry;
+		config_fields original_entry;
 };
 class feed_editor : public config_entry, public ComponentBase {
 public:
@@ -151,7 +151,7 @@ public:
 		}, &menu_row));
 	}
 	bool mark_saved;
-	basic_entry entry_contents;
+	config_fields entry_contents;
 private:
 	const ComponentDecorator line_item_decorator = Renderer(border);
 	Component compose_line_item(Component input_box,
