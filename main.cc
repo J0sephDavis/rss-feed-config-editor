@@ -349,8 +349,6 @@ int main(int argc, char* argv[]) {
 				config_document.allocate_string(
 					entry.changed_entry.url.c_str()));
 		}
-		//
-		log.debug("entry updated:" + entry.str());
 	}
 	for (auto& entry : added_configs) {
 		log.trace("<loop> new config entry:");
