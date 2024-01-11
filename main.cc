@@ -198,8 +198,6 @@ int main(void) {
 	int editor_menu_column = 0;
 	int editor_menu_row = 0;
 	//reset button option
-	const auto resetBtnOpt = ButtonOption::Ascii();
-	const ComponentDecorator line_item_decorator = Renderer(border);
 	for (auto& entry : cfg_entries) {
 		log.trace("<loop> add tab");
 		tab_data.push_back(std::move(
