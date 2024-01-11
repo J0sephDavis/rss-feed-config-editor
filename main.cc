@@ -329,8 +329,6 @@ int main(void) {
 			auto fileName_node = config_document.allocate_node(
 				rx::node_element, "feedFileName",
 				new_fileName);
-			//TODO url_node needs subnode CDATA
-			//url parent node
 			auto url_node = config_document.allocate_node(
 				rx::node_element, "feed-url");
 			{
