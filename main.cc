@@ -32,12 +32,12 @@ struct basic_entry {
 		}
 };
 //a feed with an already existing reference
-class feed_entry {
+class config_entry {
 	public:
-		feed_entry(rx::xml_node<>& reference) :
+		config_entry(rx::xml_node<>& reference) :
 			xml_reference(reference)
 		{
-			log.trace("feed_entry constructor");
+			log.trace("config_entry constructor");
 			std::string fileName = reference.first_node("feedFileName")->value();
 			std::string title = reference.first_node("title")->first_node()->value();
 			std::string regex = reference.first_node("expr")->value();
@@ -48,8 +48,8 @@ class feed_entry {
 			};
 			changed_entry = original_entry;
 		}
-		~feed_entry() {
-			log.debug("feed_entry::deconstructor");
+		~config_entry() {
+			log.debug("config_entry::deconstructor");
 		}
 	public: //assistant
 		std::string str() {
@@ -87,11 +87,11 @@ class feed_entry {
 		const rx::xml_node<>& xml_reference;
 		basic_entry original_entry;
 };
-class feed_editor : public feed_entry, public ComponentBase {
+class feed_editor : public config_entry, public ComponentBase {
 public:
-	explicit feed_editor(feed_entry& entry,
+	explicit feed_editor(config_entry& entry,
 			int& menu_column,
-			int& menu_row): feed_entry(entry) {
+			int& menu_row): config_entry(entry) {
 		log.trace("feed_editor constructor");
 		Add(Container::Vertical({
 			compose_line_item(
@@ -149,7 +149,6 @@ public:
 			Input(entry_contents.url, "url"),
 			Checkbox("Save?", &mark_saved)
 		}, &menu_row));
-//			Renderer([](){return text("NEW ENTRY") | hcenter;}),
 	}
 	bool mark_saved;
 	basic_entry entry_contents;
@@ -164,7 +163,7 @@ private:
 	};
 };
 //to create components from out component classes
-Component editor_comp (feed_entry& entry, int& menu_column, int& menu_row) {
+Component editor_comp (config_entry& entry, int& menu_column, int& menu_row) {
 	return Make<feed_editor>(entry, menu_column, menu_row);
 }
 Component new_editor_comp (int& menu_row) {
@@ -183,15 +182,15 @@ int main(void) {
 		exit(EXIT_FAILURE);
 	}
 	// store the config data
-	std::vector<feed_entry> entries;
-	entries.reserve(50); //if value is too low,
+	std::vector<config_entry> cfg_entries;
+	cfg_entries.reserve(50); //if value is too low,
 			     //we waste time resizing the vector
 	for (rx::xml_node<>* entry_node = config_document.first_node()->first_node("item");
 			entry_node;
 			entry_node = entry_node->next_sibling()) {
 		log.trace("<loop> store config data");
-		entries.emplace_back(*entry_node);
-		log.debug("New entry:" + entries.back().str());
+		cfg_entries.emplace_back(*entry_node);
+		log.debug("New entry:" + cfg_entries.back().str());
 	}
 	// create each tab
 	std::vector<std::string> tab_menu_entries;
@@ -201,7 +200,7 @@ int main(void) {
 	//reset button option
 	const auto resetBtnOpt = ButtonOption::Ascii();
 	const ComponentDecorator line_item_decorator = Renderer(border);
-	for (auto& entry : entries) {
+	for (auto& entry : cfg_entries) {
 		log.trace("<loop> add tab");
 		tab_data.push_back(std::move(
 			editor_comp(entry,
@@ -261,7 +260,7 @@ int main(void) {
 	log.trace("SCREEN LOOP");
 	screen.Loop(x);
 	bool config_changed = false;
-	for (auto& entry : entries) {
+	for (auto& entry : cfg_entries) {
 		log.trace("<loop> check entry for change");
 		auto& node = entry.g_xmlRef();
 		if (entry.update_fileName || entry.update_history || entry.update_regex || entry.update_url || entry.update_title)
