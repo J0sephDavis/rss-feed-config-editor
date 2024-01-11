@@ -216,11 +216,11 @@ int main(void) {
 	Component main_component;
 	Component tab_menu = Menu(&tab_menu_entries, &tab_selector);
 	// button to add config tab
-	std::vector<config_fields> added_configs;
+	std::vector<config_fields*> added_configs;
 	std::function<void()> newfunc([&]{
 		log.trace(">new_func");
-		added_configs.emplace_back();
-		tab_data.emplace_back(new_editor_comp((added_configs.back()),
+		added_configs.push_back(new config_fields);
+		tab_data.emplace_back(new_editor_comp(*(added_configs.back()),
 					editor_menu_row));	
 		tabs->Detach(); //Remove from the main_component interaction hierarchy
 		tabs = Container::Tab(tab_data, &tab_selector);
@@ -299,29 +299,29 @@ int main(void) {
 		//
 		log.debug("entry updated:" + entry.str());
 	}
-	for (auto entry : added_configs) {
+	for (auto& entry : added_configs) {
 		log.trace("<loop> new config entry:");
-		log.debug("\tTITLE:" + entry.title);
-		log.debug("\tFILENAME:" + entry.fileName);
-		log.debug("\tREGEX:" + entry.regex);
-		log.debug("\tHISTORY:" + entry.history);
-		log.debug("\tURL:" + entry.url);
-		log.debug("\tSAVE?:" + std::string((entry.save_entry)?"true":"false"));
-		if (entry.save_entry) {
+		log.debug("\tTITLE:" + entry->title);
+		log.debug("\tFILENAME:" + entry->fileName);
+		log.debug("\tREGEX:" + entry->regex);
+		log.debug("\tHISTORY:" + entry->history);
+		log.debug("\tURL:" + entry->url);
+		log.debug("\tSAVE?:" + std::string((entry->save_entry)?"true":"false"));
+		if (entry->save_entry) {
 			log.trace("attempt to save entry");
 			auto item_node = config_document.allocate_node(
 				rx::node_element, "item");
 			//allocate values
 			auto new_title = config_document.allocate_string(
-					entry.title.c_str());
+					entry->title.c_str());
 			auto new_fileName = config_document.allocate_string(
-					entry.fileName.c_str());
+					entry->fileName.c_str());
 			auto new_url = config_document.allocate_string(
-					entry.url.c_str());
+					entry->url.c_str());
 			auto new_regex = config_document.allocate_string(
-					entry.regex.c_str());
+					entry->regex.c_str());
 			auto new_history = config_document.allocate_string(
-					entry.history.c_str());
+					entry->history.c_str());
 			std::cout << "DONE ALLOCATING STRINGS";
 			//allocate nodes
 			auto title_node = config_document.allocate_node(
