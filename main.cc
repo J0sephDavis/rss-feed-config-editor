@@ -138,8 +138,41 @@ private:
 		}, &menu_column) | line_item_decorator;
 	};
 };
+class new_feed_editor : public ComponentBase {
+public:
+	explicit new_feed_editor(int& menu_row) {
+		log.trace("new_feed_editor constructor");
+		Add(Container::Vertical({
+			Input(fileName, "file name"),
+			Input(title, "title"),
+			Input(regex, "regex"),
+			Input(history, "history"),
+			Input(url, "url"),
+			Checkbox("Save?", &mark_saved)
+		}, &menu_row));
+//			Renderer([](){return text("NEW ENTRY") | hcenter;}),
+	}
+private:
+	bool mark_saved;
+	std::string fileName;
+	std::string title;
+	std::string regex;
+	std::string history;
+	std::string url;
+	const ComponentDecorator line_item_decorator = Renderer(border);
+	Component compose_line_item(Component input_box,
+				Component checkbox, Component button,
+				int& menu_column) {
+		return Container::Horizontal({
+			input_box, checkbox, button
+		}, &menu_column) | line_item_decorator;
+	};
+};
 Component editor_comp (feed_entry& entry, int& menu_column, int& menu_row) {
 	return Make<feed_editor>(entry, menu_column, menu_row);
+}
+Component new_editor_comp (int& menu_row) {
+	return Make<new_feed_editor>(menu_row);
 }
 int main(void) {
 	const std::string path_to_config = "/home/sooth/Documents/Code/10-19/11/04 RSS-Feed config editor/data/rss-config.xml";
@@ -189,12 +222,7 @@ int main(void) {
 	// button to add config tab
 	std::function<void()> newfunc([&]{
 		log.trace(">new_func");
-		tab_data.emplace_back(Container::Vertical({
-			Renderer([counter](){
-				return text("new tab #"
-						+ std::to_string(counter));
-			})
-		}));
+		tab_data.emplace_back(new_editor_comp(editor_menu_row));	
 		tabs = Container::Tab(tab_data, &tab_selector);
 		tab_menu_entries.push_back("new tab #" + std::to_string(counter++));
 		return;
