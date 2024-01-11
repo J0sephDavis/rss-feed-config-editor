@@ -406,5 +406,6 @@ int main(int argc, char* argv[]) {
 	}
 	std::ofstream new_config(path_to_config);
 	new_config << config_document; //rapidxml_print.hpp
-	return EXIT_SUCCESS;
+	new_config.close();
+	exit(EXIT_SUCCESS);
 }
