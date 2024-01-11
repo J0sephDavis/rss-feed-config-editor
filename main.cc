@@ -62,7 +62,7 @@ class config_entry {
 			return return_value;
 		}
 	public: //resets
-		void r_fileName() { this->changed_entry.fileName = original_entry.fileName; }
+		void r_fileName() {this->changed_entry.fileName = original_entry.fileName; }
 		void r_title() { this->changed_entry.title = original_entry.title; }
 		void r_regex() { this->changed_entry.regex = original_entry.regex; }
 		void r_history() { this->changed_entry.history = original_entry.history; }
@@ -96,31 +96,36 @@ public:
 		log.trace("feed_editor constructor");
 		Add(Container::Vertical({
 			compose_line_item(
-				Input(&(entry.changed_entry.title), entry.g_title()),
+				Input(&(entry.changed_entry.title),
+					entry.g_title()),
 				Checkbox("Update?", (&entry.update_title)),
 				Button("Reset", [&](){ (&entry)->r_title();},
 					resetBtnOpt), menu_column
 			),
 			compose_line_item(
-				Input(&(entry.changed_entry.fileName), entry.g_fileName()),
+				Input(&(entry.changed_entry.fileName),
+					entry.g_fileName()),
 				Checkbox("Update?", (&entry.update_fileName)),
 				Button("Reset", [&](){ (&entry)->r_fileName();},
 					resetBtnOpt), menu_column
 			),
 			compose_line_item(
-				Input(&(entry.changed_entry.regex), entry.g_regex()),
+				Input(&(entry.changed_entry.regex),
+					entry.g_regex()),
 				Checkbox("Update?", (&entry.update_regex)),
 				Button("Reset", [&](){ (&entry)->r_regex();},
 					resetBtnOpt), menu_column
 			),
 			compose_line_item(
-				Input(&(entry.changed_entry.history), entry.g_history()),
+				Input(&(entry.changed_entry.history),
+					entry.g_history()),
 				Checkbox("Update?", (&entry.update_history)),
 				Button("Reset", [&](){ (&entry)->r_history();},
 					resetBtnOpt), menu_column
 			),
 			compose_line_item(
-				Input(&(entry.changed_entry.url), entry.g_url()),
+				Input(&(entry.changed_entry.url),
+					entry.g_url()),
 				Checkbox("Update?", (&entry.update_url)),
 				Button("Reset", [&](){ (&entry)->r_url();},
 					resetBtnOpt), menu_column
@@ -187,7 +192,8 @@ int main(void) {
 	// store the config data
 	std::vector<config_entry> cfg_entries;
 	cfg_entries.reserve(50); //avoid resizing vector
-	for (rx::xml_node<>* entry_node = config_document.first_node()->first_node("item");
+	for (rx::xml_node<>* entry_node
+		= config_document.first_node()->first_node("item");
 			entry_node;
 			entry_node = entry_node->next_sibling()) {
 		log.trace("<loop> store config data");
@@ -225,7 +231,8 @@ int main(void) {
 		tabs->Detach(); //Remove from the main_component interaction hierarchy
 		tabs = Container::Tab(tab_data, &tab_selector);
 		main_component->Add(tabs); //add to the main_component interaction hierarchy
-		tab_menu_entries.push_back("new tab #" + std::to_string(counter++));
+		tab_menu_entries.push_back("new tab #"
+			+ std::to_string(counter++));
 		return;
 	});
 	auto add_config_button = Button("New Config", newfunc);
@@ -266,35 +273,51 @@ int main(void) {
 	for (auto& entry : cfg_entries) {
 		log.trace("<loop> check entry for change");
 		auto& node = entry.g_xmlRef();
-		if (entry.update_fileName || entry.update_history || entry.update_regex || entry.update_url || entry.update_title)
+		if (entry.update_fileName || entry.update_history
+				|| entry.update_regex || entry.update_url
+				|| entry.update_title)
 			config_changed = true;
 		else continue;
 		//
 		if (entry.update_fileName) {
 			log.info("updating fileName (" + entry.g_fileName()
-					+ ") -> (" + entry.changed_entry.fileName + ")");
-			node.first_node("feedFileName")->first_node()->value(config_document.allocate_string(entry.changed_entry.fileName.c_str()));
+					+ ") -> ("
+					+ entry.changed_entry.fileName + ")");
+			node.first_node("feedFileName")->first_node()->value(
+				config_document.allocate_string(
+					entry.changed_entry.fileName.c_str()));
 		}
 		if (entry.update_title) {
 			log.info("updating title (" + entry.g_title()
-					+ ") -> (" + entry.changed_entry.title + ")");
-			node.first_node("title")->first_node()->value(config_document.allocate_string(entry.changed_entry.title.c_str()));
+					+ ") -> (" + entry.changed_entry.title
+					+ ")");
+			node.first_node("title")->first_node()->value(
+				config_document.allocate_string(
+					entry.changed_entry.title.c_str()));
 		}
 		if (entry.update_regex) {
 			log.info("updating regex (" + entry.g_regex()
-					+ ") -> (" + entry.changed_entry.regex + ")");
-			node.first_node("expr")->first_node()->value(config_document.allocate_string(entry.changed_entry.regex.c_str()));
+					+ ") -> (" + entry.changed_entry.regex
+					+ ")");
+			node.first_node("expr")->first_node()->value(
+				config_document.allocate_string(
+					entry.changed_entry.regex.c_str()));
 		}
 		if (entry.update_history) {
 			log.info("updating history (" + entry.g_history()
-					+ ") -> (" + entry.changed_entry.history + ")");
-			node.first_node("history")->first_node()->value(config_document.allocate_string(entry.changed_entry.history.c_str()));
+					+ ") -> ("+ entry.changed_entry.history
+					+ ")");
+			node.first_node("history")->first_node()->value(
+				config_document.allocate_string(
+					entry.changed_entry.history.c_str()));
 		}
 		if (entry.update_url) {
 			log.info("updating url (" + entry.g_url()
-					+ ") -> (" + entry.changed_entry.url + ")");
-			node.first_node("feed-url")->first_node()->value(config_document.allocate_string(entry.changed_entry.url.c_str()));
-
+					+ ") -> (" + entry.changed_entry.url
+					+ ")");
+			node.first_node("feed-url")->first_node()->value(
+				config_document.allocate_string(
+					entry.changed_entry.url.c_str()));
 		}
 		//
 		log.debug("entry updated:" + entry.str());
@@ -306,7 +329,9 @@ int main(void) {
 		log.debug("\tREGEX:" + entry->regex);
 		log.debug("\tHISTORY:" + entry->history);
 		log.debug("\tURL:" + entry->url);
-		log.debug("\tSAVE?:" + std::string((entry->save_entry)?"true":"false"));
+		log.debug("\tSAVE?:" + std::string(
+			(entry->save_entry)?"true":"false")
+		);
 		if (entry->save_entry) {
 			log.trace("attempt to save entry");
 			auto item_node = config_document.allocate_node(
