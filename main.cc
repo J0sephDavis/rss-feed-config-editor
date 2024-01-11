@@ -89,49 +89,54 @@ class feed_entry {
 		const rx::xml_node<>& xml_reference;
 };
 class feed_editor : public feed_entry, public ComponentBase {
-	public:
-		explicit feed_editor(feed_entry& entry,
-				int& menu_column,
-				int& menu_row): feed_entry(entry) {
-			log.trace("feed_editor constructor");
-			Add(Container::Vertical({
-				compose_line_item(
-					Input(&(entry.tmp_title), entry.g_title()),
-					Checkbox("Update?", (&entry.changed_title)),
-					Button("Reset", [&](){ (&entry)->r_title();}, resetBtnOpt), menu_column
-				),
-				compose_line_item(
-					Input(&(entry.tmp_fileName), entry.g_fileName()),
-					Checkbox("Update?", (&entry.changed_fileName)),
-					Button("Reset", [&](){ (&entry)->r_fileName();}, resetBtnOpt), menu_column
-				),
-				compose_line_item(
-					Input(&(entry.tmp_regex), entry.g_regex()),
-					Checkbox("Update?", (&entry.changed_regex)),
-					Button("Reset", [&](){ (&entry)->r_regex();}, resetBtnOpt), menu_column
-				),
-				compose_line_item(
-					Input(&(entry.tmp_history), entry.g_history()),
-					Checkbox("Update?", (&entry.changed_history)),
-					Button("Reset", [&](){ (&entry)->r_history();}, resetBtnOpt), menu_column
-				),
-				compose_line_item(
-					Input(&(entry.tmp_url), entry.g_url()),
-					Checkbox("Update?", (&entry.changed_url)),
-					Button("Reset", [&](){ (&entry)->r_url();}, resetBtnOpt), menu_column
-				),
-			}, &menu_row));
-		}
-	private:
-		const ButtonOption resetBtnOpt = ButtonOption::Ascii();
-		const ComponentDecorator line_item_decorator = Renderer(border);
-		Component compose_line_item(Component input_box,
-					Component checkbox, Component button,
-					int& menu_column) {
-			return Container::Horizontal({
-				input_box, checkbox, button
-			}, &menu_column) | line_item_decorator;
-		};
+public:
+	explicit feed_editor(feed_entry& entry,
+			int& menu_column,
+			int& menu_row): feed_entry(entry) {
+		log.trace("feed_editor constructor");
+		Add(Container::Vertical({
+			compose_line_item(
+				Input(&(entry.tmp_title), entry.g_title()),
+				Checkbox("Update?", (&entry.changed_title)),
+				Button("Reset", [&](){ (&entry)->r_title();},
+					resetBtnOpt), menu_column
+			),
+			compose_line_item(
+				Input(&(entry.tmp_fileName), entry.g_fileName()),
+				Checkbox("Update?", (&entry.changed_fileName)),
+				Button("Reset", [&](){ (&entry)->r_fileName();},
+					resetBtnOpt), menu_column
+			),
+			compose_line_item(
+				Input(&(entry.tmp_regex), entry.g_regex()),
+				Checkbox("Update?", (&entry.changed_regex)),
+				Button("Reset", [&](){ (&entry)->r_regex();},
+					resetBtnOpt), menu_column
+			),
+			compose_line_item(
+				Input(&(entry.tmp_history), entry.g_history()),
+				Checkbox("Update?", (&entry.changed_history)),
+				Button("Reset", [&](){ (&entry)->r_history();},
+					resetBtnOpt), menu_column
+			),
+			compose_line_item(
+				Input(&(entry.tmp_url), entry.g_url()),
+				Checkbox("Update?", (&entry.changed_url)),
+				Button("Reset", [&](){ (&entry)->r_url();},
+					resetBtnOpt), menu_column
+			),
+		}, &menu_row));
+	}
+private:
+	const ButtonOption resetBtnOpt = ButtonOption::Ascii();
+	const ComponentDecorator line_item_decorator = Renderer(border);
+	Component compose_line_item(Component input_box,
+				Component checkbox, Component button,
+				int& menu_column) {
+		return Container::Horizontal({
+			input_box, checkbox, button
+		}, &menu_column) | line_item_decorator;
+	};
 };
 Component editor_comp (feed_entry& entry, int& menu_column, int& menu_row) {
 	return Make<feed_editor>(entry, menu_column, menu_row);
