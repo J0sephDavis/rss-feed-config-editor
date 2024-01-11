@@ -177,8 +177,14 @@ Component editor_comp (config_entry& entry, int& menu_column, int& menu_row) {
 Component new_editor_comp (config_fields& field_data, int& menu_row) {
 	return Make<new_feed_editor>(field_data, menu_row);
 }
-int main(void) {
-	const std::string path_to_config = "/home/sooth/Documents/Code/10-19/11/04 RSS-Feed config editor/data/rss-config.xml";
+int main(int argc, char* argv[]) {
+	if (argc < 1) exit(EXIT_FAILURE);
+	std::filesystem::path path_to_config(argv[1]);
+	if (!path_to_config.has_extension())
+		exit(EXIT_FAILURE);
+	if (path_to_config.extension() != ".xml")
+		exit(EXIT_FAILURE);
+//	const std::string path_to_config = "/home/sooth/Documents/Code/10-19/11/04 RSS-Feed config editor/data/rss-config.xml";
 	static rx::xml_document<> config_document;
 	static rx::file<> config_file(path_to_config);
 	try {
