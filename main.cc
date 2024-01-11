@@ -14,79 +14,78 @@
 using namespace libLogger;
 using namespace ftxui;
 namespace rx = rapidxml;
+struct basic_entry {
+	public:
+		std::string fileName;
+		std::string title;
+		std::string regex;
+		std::string history;
+		std::string url;
+		friend std::ostream& operator<<(std::ostream& os,
+				const basic_entry& entry) {
+			os << "TITLE: " << entry.title << "\n"
+				<< "FILE: " << entry.fileName << "\n"
+				<< "EXPR: " << entry.regex << "\n"
+				<< "HIST: " << entry.history << "\n"
+				<< "URL: " << entry.url;
+			return os;
+		}
+};
+//a feed with an already existing reference
 class feed_entry {
 	public:
 		feed_entry(rx::xml_node<>& reference) :
 			xml_reference(reference)
 		{
 			log.trace("feed_entry constructor");
-			fileName = reference.first_node("feedFileName")->value();
-			title = reference.first_node("title")->first_node()->value();
-			regex = reference.first_node("expr")->value();
-			history = reference.first_node("history")->value();
-			url = reference.first_node("feed-url")->first_node()->value();
-			//
-			this->tmp_fileName = fileName;
-			this->tmp_title = title;
-			this->tmp_regex = regex;
-			this->tmp_history = history;
-			this->tmp_url = url;
+			std::string fileName = reference.first_node("feedFileName")->value();
+			std::string title = reference.first_node("title")->first_node()->value();
+			std::string regex = reference.first_node("expr")->value();
+			std::string history = reference.first_node("history")->value();
+			std::string url = reference.first_node("feed-url")->first_node()->value();
+			original_entry = {
+				fileName,title,regex,history,url
+			};
+			changed_entry = original_entry;
 		}
 		~feed_entry() {
 			log.debug("feed_entry::deconstructor");
 		}
+	public: //assistant
+		std::string str() {
+			std::string return_value = "TITLE: " + original_entry.title + "\n"
+				+ "FILE: " + original_entry.fileName + "\n"
+				+ "EXPR: " + original_entry.regex + "\n"
+				+ "HIST: " + original_entry.history + "\n"
+				+ "URL: " + original_entry.url;
+			return return_value;
+		}
 	public: //resets
-		void r_fileName() { this->tmp_fileName = fileName; }
-		void r_title() { this->tmp_title = title; }
-		void r_regex() { this->tmp_regex = regex; }
-		void r_history() { this->tmp_history = history; }
-		void r_url() { this->tmp_url = url; }
+		void r_fileName() { this->changed_entry.fileName = original_entry.fileName; }
+		void r_title() { this->changed_entry.title = original_entry.title; }
+		void r_regex() { this->changed_entry.regex = original_entry.regex; }
+		void r_history() { this->changed_entry.history = original_entry.history; }
+		void r_url() { this->changed_entry.url = original_entry.url; }
 	public: //GETTERS
-		std::string g_fileName() const { return fileName; }
-		std::string g_title() const { return title; }
-		std::string g_regex() const { return regex; }
-		std::string g_history() const { return history; }
-		std::string g_url() const { return url; }
+		std::string g_fileName() { return original_entry.fileName; }
+		std::string g_title() { return original_entry.title; }
+		std::string g_regex() { return original_entry.regex; }
+		std::string g_history() { return original_entry.history; }
+		std::string g_url() { return original_entry.url; }
 		const rx::xml_node<>& g_xmlRef() const {
 			return xml_reference;
 		}
 	public: //other
-		std::string str() {
-			std::string return_value = "TITLE: " + g_title() + "\n"
-				+ "FILE: " + g_fileName() + "\n"
-				+ "EXPR: " + g_regex() + "\n"
-				+ "HIST: " + g_history() + "\n"
-				+ "URL: " + g_url();
-			return return_value;
-		}
-		friend std::ostream& operator<<(std::ostream& os,
-				const feed_entry& entry) {
-			os << "TITLE: " << entry.g_title() << "\n"
-				<< "FILE: " << entry.g_fileName() << "\n"
-				<< "EXPR: " << entry.g_regex() << "\n"
-				<< "HIST: " << entry.g_history() << "\n"
-				<< "URL: " << entry.g_url();
-			return os;
-		}
 		//tmp_xxx are used to update values
-		std::string tmp_fileName;
-		std::string tmp_title;
-		std::string tmp_regex;
-		std::string tmp_history;
-		std::string tmp_url;
-		bool changed_fileName = false;
-		bool changed_title = false;
-		bool changed_regex = false;
-		bool changed_history = false;
-		bool changed_url = false;
+		basic_entry changed_entry;
+		bool update_fileName = false;
+		bool update_title = false;
+		bool update_regex = false;
+		bool update_history = false;
+		bool update_url = false;
 	private: //DESCRIPTORS
-		std::string fileName;
-		std::string title;
-		std::string regex;
-		std::string history;
-		std::string url;
-		//changed = true if any of the descriptors are updated
 		const rx::xml_node<>& xml_reference;
+		basic_entry original_entry;
 };
 class feed_editor : public feed_entry, public ComponentBase {
 public:
@@ -96,32 +95,32 @@ public:
 		log.trace("feed_editor constructor");
 		Add(Container::Vertical({
 			compose_line_item(
-				Input(&(entry.tmp_title), entry.g_title()),
-				Checkbox("Update?", (&entry.changed_title)),
+				Input(&(entry.changed_entry.title), entry.g_title()),
+				Checkbox("Update?", (&entry.update_title)),
 				Button("Reset", [&](){ (&entry)->r_title();},
 					resetBtnOpt), menu_column
 			),
 			compose_line_item(
-				Input(&(entry.tmp_fileName), entry.g_fileName()),
-				Checkbox("Update?", (&entry.changed_fileName)),
+				Input(&(entry.changed_entry.fileName), entry.g_fileName()),
+				Checkbox("Update?", (&entry.update_fileName)),
 				Button("Reset", [&](){ (&entry)->r_fileName();},
 					resetBtnOpt), menu_column
 			),
 			compose_line_item(
-				Input(&(entry.tmp_regex), entry.g_regex()),
-				Checkbox("Update?", (&entry.changed_regex)),
+				Input(&(entry.changed_entry.regex), entry.g_regex()),
+				Checkbox("Update?", (&entry.update_regex)),
 				Button("Reset", [&](){ (&entry)->r_regex();},
 					resetBtnOpt), menu_column
 			),
 			compose_line_item(
-				Input(&(entry.tmp_history), entry.g_history()),
-				Checkbox("Update?", (&entry.changed_history)),
+				Input(&(entry.changed_entry.history), entry.g_history()),
+				Checkbox("Update?", (&entry.update_history)),
 				Button("Reset", [&](){ (&entry)->r_history();},
 					resetBtnOpt), menu_column
 			),
 			compose_line_item(
-				Input(&(entry.tmp_url), entry.g_url()),
-				Checkbox("Update?", (&entry.changed_url)),
+				Input(&(entry.changed_entry.url), entry.g_url()),
+				Checkbox("Update?", (&entry.update_url)),
 				Button("Reset", [&](){ (&entry)->r_url();},
 					resetBtnOpt), menu_column
 			),
@@ -268,34 +267,34 @@ int main(void) {
 	for (auto& entry : entries) {
 		log.trace("<loop> check entry for change");
 		auto& node = entry.g_xmlRef();
-		if (entry.changed_fileName || entry.changed_history || entry.changed_regex || entry.changed_url || entry.changed_title)
+		if (entry.update_fileName || entry.update_history || entry.update_regex || entry.update_url || entry.update_title)
 			config_changed = true;
 		else continue;
 		//
-		if (entry.changed_fileName) {
+		if (entry.update_fileName) {
 			log.info("updating fileName (" + entry.g_fileName()
-					+ ") -> (" + entry.tmp_fileName + ")");
-			node.first_node("feedFileName")->first_node()->value(config_document.allocate_string(entry.tmp_fileName.c_str()));
+					+ ") -> (" + entry.changed_entry.fileName + ")");
+			node.first_node("feedFileName")->first_node()->value(config_document.allocate_string(entry.changed_entry.fileName.c_str()));
 		}
-		if (entry.changed_title) {
+		if (entry.update_title) {
 			log.info("updating title (" + entry.g_title()
-					+ ") -> (" + entry.tmp_title + ")");
-			node.first_node("title")->first_node()->value(config_document.allocate_string(entry.tmp_title.c_str()));
+					+ ") -> (" + entry.changed_entry.title + ")");
+			node.first_node("title")->first_node()->value(config_document.allocate_string(entry.changed_entry.title.c_str()));
 		}
-		if (entry.changed_regex) {
+		if (entry.update_regex) {
 			log.info("updating regex (" + entry.g_regex()
-					+ ") -> (" + entry.tmp_regex + ")");
-			node.first_node("expr")->first_node()->value(config_document.allocate_string(entry.tmp_regex.c_str()));
+					+ ") -> (" + entry.changed_entry.regex + ")");
+			node.first_node("expr")->first_node()->value(config_document.allocate_string(entry.changed_entry.regex.c_str()));
 		}
-		if (entry.changed_history) {
+		if (entry.update_history) {
 			log.info("updating history (" + entry.g_history()
-					+ ") -> (" + entry.tmp_history + ")");
-			node.first_node("history")->first_node()->value(config_document.allocate_string(entry.tmp_history.c_str()));
+					+ ") -> (" + entry.changed_entry.history + ")");
+			node.first_node("history")->first_node()->value(config_document.allocate_string(entry.changed_entry.history.c_str()));
 		}
-		if (entry.changed_url) {
+		if (entry.update_url) {
 			log.info("updating url (" + entry.g_url()
-					+ ") -> (" + entry.tmp_url + ")");
-			node.first_node("feed-url")->first_node()->value(config_document.allocate_string(entry.tmp_url.c_str()));
+					+ ") -> (" + entry.changed_entry.url + ")");
+			node.first_node("feed-url")->first_node()->value(config_document.allocate_string(entry.changed_entry.url.c_str()));
 
 		}
 		//
