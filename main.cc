@@ -218,12 +218,15 @@ int main(void) {
 	int tab_selector = 0;
 	// bundle tabs
 	auto tabs = Container::Tab(tab_data,&tab_selector);
+	Component main_component;
 	Component tab_menu = Menu(&tab_menu_entries, &tab_selector);
 	// button to add config tab
 	std::function<void()> newfunc([&]{
 		log.trace(">new_func");
 		tab_data.emplace_back(new_editor_comp(editor_menu_row));	
+		tabs->Detach();
 		tabs = Container::Tab(tab_data, &tab_selector);
+		main_component->Add(tabs);
 		tab_menu_entries.push_back("new tab #" + std::to_string(counter++));
 		return;
 	});
@@ -231,21 +234,12 @@ int main(void) {
 	// to render the screen interactively
 	auto screen = ScreenInteractive::FitComponent();
 	// used to establish hierarchy of components
-	Component main_component = Container::Horizontal({
+	main_component = Container::Horizontal({
 			Container::Vertical({
 				tab_menu,
 				add_config_button,
 			}),
 			tabs
-	}) | CatchEvent([&](Event event) {
-		//prevent quitting while in input component
-		if (event == Event::Character('q') && !tabs->Focused()) {
-			//TODO prompt user to save or discard changes
-			//TODO print summary of changes
-			screen.ExitLoopClosure()();
-			return true;
-		}
-		else return false;
 	});
 	//the final rendered component
 	auto x =  Renderer(main_component, [&](){
@@ -258,6 +252,15 @@ int main(void) {
 			separator(),
 			tabs->Render(),
 		}) | border;
+	}) | CatchEvent([&](Event event) {
+		//prevent quitting while in input component
+		if (event == Event::Character('q') && !tabs->Focused()) {
+			//TODO prompt user to save or discard changes
+			//TODO print summary of changes
+			screen.ExitLoopClosure()();
+			return true;
+		}
+		else return false;
 	});
 	log.trace("SCREEN LOOP");
 	screen.Loop(x);
