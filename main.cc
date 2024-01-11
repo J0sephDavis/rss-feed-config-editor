@@ -300,13 +300,58 @@ int main(void) {
 		log.debug("entry updated:" + entry.str());
 	}
 	for (auto entry : added_configs) {
-		log.info("<loop> new config entry:");
-		log.info("\tTITLE:" + entry.title);
-		log.info("\tFILENAME:" + entry.fileName);
-		log.info("\tREGEX:" + entry.regex);
-		log.info("\tHISTORY:" + entry.history);
-		log.info("\tURL:" + entry.url);
-		log.info("\tSAVE?:" + std::string((entry.save_entry)?"true":"false"));
+		log.trace("<loop> new config entry:");
+		log.debug("\tTITLE:" + entry.title);
+		log.debug("\tFILENAME:" + entry.fileName);
+		log.debug("\tREGEX:" + entry.regex);
+		log.debug("\tHISTORY:" + entry.history);
+		log.debug("\tURL:" + entry.url);
+		log.debug("\tSAVE?:" + std::string((entry.save_entry)?"true":"false"));
+		if (entry.save_entry) {
+			log.trace("attempt to save entry");
+			auto item_node = config_document.allocate_node(
+				rx::node_element, "item");
+			//allocate values
+			auto new_title = config_document.allocate_string(
+					entry.title.c_str());
+			auto new_fileName = config_document.allocate_string(
+					entry.fileName.c_str());
+			auto new_url = config_document.allocate_string(
+					entry.url.c_str());
+			auto new_regex = config_document.allocate_string(
+					entry.regex.c_str());
+			auto new_history = config_document.allocate_string(
+					entry.history.c_str());
+			std::cout << "DONE ALLOCATING STRINGS";
+			//allocate nodes
+			auto title_node = config_document.allocate_node(
+				rx::node_element, "title", new_title);
+			auto fileName_node = config_document.allocate_node(
+				rx::node_element, "feedFileName",
+				new_fileName);
+			//TODO url_node needs subnode CDATA
+			//url parent node
+			auto url_node = config_document.allocate_node(
+				rx::node_element, "feed-url");
+			{
+				auto url_cdata = config_document.allocate_node(
+					rx::node_cdata, 0, new_url);
+				url_node->append_node(url_cdata);
+			}
+			auto regex_node = config_document.allocate_node(
+				rx::node_element, "expr", new_regex);
+			auto history_node = config_document.allocate_node(
+				rx::node_element, "history", new_history);
+			std::cout << "allocated each node";
+			//append each node to the item node
+			item_node->append_node(title_node);
+			item_node->append_node(fileName_node);
+			item_node->append_node(url_node);
+			item_node->append_node(regex_node);
+			item_node->append_node(history_node);
+			//append the item node to the main XML doc
+			config_document.first_node()->append_node(item_node);
+		}
 	}
 	std::ofstream new_config(path_to_config);
 	new_config << config_document; //rapidxml_print.hpp
