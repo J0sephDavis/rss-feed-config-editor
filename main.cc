@@ -87,11 +87,11 @@ class config_entry {
 		const rx::xml_node<>& xml_reference;
 		config_fields original_entry;
 };
-class feed_editor : public config_entry, public ComponentBase {
+class feed_editor : public ComponentBase {
 public:
 	explicit feed_editor(config_entry& entry,
 			int& menu_column,
-			int& menu_row): config_entry(entry) {
+			int& menu_row)  {
 		log.trace("feed_editor constructor");
 		Add(Container::Vertical({
 			compose_line_item(
@@ -217,13 +217,13 @@ int main(void) {
 	std::function<void()> newfunc([&]{
 		log.trace(">new_func");
 		tab_data.emplace_back(new_editor_comp(editor_menu_row));	
-		tabs->Detach();
+		tabs->Detach(); //Remove from the main_component interaction hierarchy
 		tabs = Container::Tab(tab_data, &tab_selector);
-		main_component->Add(tabs);
+		main_component->Add(tabs); //add to the main_component interaction hierarchy
 		tab_menu_entries.push_back("new tab #" + std::to_string(counter++));
 		return;
 	});
-	auto add_config_button = Button("Create config?", newfunc);
+	auto add_config_button = Button("New Config", newfunc);
 	// to render the screen interactively
 	auto screen = ScreenInteractive::FitComponent();
 	// used to establish hierarchy of components
