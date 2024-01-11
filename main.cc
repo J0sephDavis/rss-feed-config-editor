@@ -142,22 +142,18 @@ public:
 	explicit new_feed_editor(int& menu_row) {
 		log.trace("new_feed_editor constructor");
 		Add(Container::Vertical({
-			Input(fileName, "file name"),
-			Input(title, "title"),
-			Input(regex, "regex"),
-			Input(history, "history"),
-			Input(url, "url"),
+			Input(entry_contents.fileName, "file name"),
+			Input(entry_contents.title, "title"),
+			Input(entry_contents.regex, "regex"),
+			Input(entry_contents.history, "history"),
+			Input(entry_contents.url, "url"),
 			Checkbox("Save?", &mark_saved)
 		}, &menu_row));
 //			Renderer([](){return text("NEW ENTRY") | hcenter;}),
 	}
-private:
 	bool mark_saved;
-	std::string fileName;
-	std::string title;
-	std::string regex;
-	std::string history;
-	std::string url;
+	basic_entry entry_contents;
+private:
 	const ComponentDecorator line_item_decorator = Renderer(border);
 	Component compose_line_item(Component input_box,
 				Component checkbox, Component button,
@@ -167,6 +163,7 @@ private:
 		}, &menu_column) | line_item_decorator;
 	};
 };
+//to create components from out component classes
 Component editor_comp (feed_entry& entry, int& menu_column, int& menu_row) {
 	return Make<feed_editor>(entry, menu_column, menu_row);
 }
