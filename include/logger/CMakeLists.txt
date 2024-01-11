@@ -8,7 +8,7 @@ project(logger
 )
 #configure file
 set(LOG_FOLDER "${CMAKE_BINARY_DIR}/../data/logs/")
-set(LOG_PREFIX "log-") #todo: allow this to be optionally set by the top-level project
+set(LOG_PREFIX "rss-config-") #todo: allow this to be optionally set by the top-level project
 set(LOG_SUFFIX ".log")
 configure_file("logger_config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/logger_config.h" @ONLY)
 

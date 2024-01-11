@@ -15,12 +15,12 @@ logger::~logger() {
 	send("logger::~logger", logTRACE);
 	os << std::endl; //flush
 	std::time_t time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-#ifndef LOG_PREFIX
+#ifdef LOG_PREFIX
 	const std::string log_prefix = LOG_PREFIX;
 #else
 	const std::string log_prefix = "rss-feed-";
 #endif
-#ifndef LOG_SUFFIX
+#ifdef LOG_SUFFIX
 	const std::string log_suffix = LOG_SUFFIX;
 #else
 	const std::string log_suffix = ".log";
