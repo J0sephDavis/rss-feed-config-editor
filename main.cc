@@ -21,6 +21,7 @@ struct config_fields {
 		std::string regex;
 		std::string history;
 		std::string url;
+		bool save_entry = false; //ONLY USED FOR NON-REFERENCE i.e., NEW entries
 		friend std::ostream& operator<<(std::ostream& os,
 				const config_fields& entry) {
 			os << "TITLE: " << entry.title << "\n"
@@ -141,19 +142,19 @@ private:
 };
 class new_feed_editor : public ComponentBase {
 public:
-	explicit new_feed_editor(int& menu_row) {
+	explicit new_feed_editor(config_fields& entry_ref, int& menu_row):
+		entry_contents(entry_ref){
 		log.trace("new_feed_editor constructor");
 		Add(Container::Vertical({
-			Input(entry_contents.fileName, "file name"),
-			Input(entry_contents.title, "title"),
-			Input(entry_contents.regex, "regex"),
-			Input(entry_contents.history, "history"),
-			Input(entry_contents.url, "url"),
-			Checkbox("Save?", &mark_saved)
+			Input(&entry_contents.fileName, "file name"),
+			Input(&entry_contents.title, "title"),
+			Input(&entry_contents.regex, "regex"),
+			Input(&entry_contents.history, "history"),
+			Input(&entry_contents.url, "url"),
+			Checkbox("Save?", &entry_contents.save_entry)
 		}, &menu_row));
 	}
-	bool mark_saved;
-	config_fields entry_contents;
+	config_fields& entry_contents;
 private:
 	const ComponentDecorator line_item_decorator = Renderer(border);
 	Component compose_line_item(Component input_box,
@@ -168,8 +169,8 @@ private:
 Component editor_comp (config_entry& entry, int& menu_column, int& menu_row) {
 	return Make<feed_editor>(entry, menu_column, menu_row);
 }
-Component new_editor_comp (int& menu_row) {
-	return Make<new_feed_editor>(menu_row);
+Component new_editor_comp (config_fields& field_data, int& menu_row) {
+	return Make<new_feed_editor>(field_data, menu_row);
 }
 int main(void) {
 	const std::string path_to_config = "/home/sooth/Documents/Code/10-19/11/04 RSS-Feed config editor/data/rss-config.xml";
@@ -215,9 +216,12 @@ int main(void) {
 	Component main_component;
 	Component tab_menu = Menu(&tab_menu_entries, &tab_selector);
 	// button to add config tab
+	std::vector<config_fields> added_configs;
 	std::function<void()> newfunc([&]{
 		log.trace(">new_func");
-		tab_data.emplace_back(new_editor_comp(editor_menu_row));	
+		added_configs.emplace_back();
+		tab_data.emplace_back(new_editor_comp((added_configs.back()),
+					editor_menu_row));	
 		tabs->Detach(); //Remove from the main_component interaction hierarchy
 		tabs = Container::Tab(tab_data, &tab_selector);
 		main_component->Add(tabs); //add to the main_component interaction hierarchy
@@ -294,6 +298,15 @@ int main(void) {
 		}
 		//
 		log.debug("entry updated:" + entry.str());
+	}
+	for (auto entry : added_configs) {
+		log.info("<loop> new config entry:");
+		log.info("\tTITLE:" + entry.title);
+		log.info("\tFILENAME:" + entry.fileName);
+		log.info("\tREGEX:" + entry.regex);
+		log.info("\tHISTORY:" + entry.history);
+		log.info("\tURL:" + entry.url);
+		log.info("\tSAVE?:" + std::string((entry.save_entry)?"true":"false"));
 	}
 	std::ofstream new_config(path_to_config);
 	new_config << config_document; //rapidxml_print.hpp
