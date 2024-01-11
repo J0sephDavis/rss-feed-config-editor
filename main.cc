@@ -183,8 +183,7 @@ int main(void) {
 	}
 	// store the config data
 	std::vector<config_entry> cfg_entries;
-	cfg_entries.reserve(50); //if value is too low,
-			     //we waste time resizing the vector
+	cfg_entries.reserve(50); //avoid resizing vector
 	for (rx::xml_node<>* entry_node = config_document.first_node()->first_node("item");
 			entry_node;
 			entry_node = entry_node->next_sibling()) {
