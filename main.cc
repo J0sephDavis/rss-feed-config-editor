@@ -298,16 +298,15 @@ int main(int argc, char* argv[]) {
 	});
 	log.trace("SCREEN LOOP");
 	screen.Loop(main_renderer);
-	bool config_changed = false;
+	if (save_changes == false){
+		log.trace("save_changes = false. Exiting");
+		exit(EXIT_SUCCESS);
+	}
+	log.trace("save_changes != false");
+	//
 	for (auto& entry : cfg_entries) {
 		log.trace("<loop> check entry for change");
 		auto& node = entry.g_xmlRef();
-		if (entry.update_fileName || entry.update_history
-				|| entry.update_regex || entry.update_url
-				|| entry.update_title)
-			config_changed = true;
-		else continue;
-		//
 		if (entry.update_fileName) {
 			log.info("updating fileName (" + entry.g_fileName()
 					+ ") -> ("
@@ -407,6 +406,5 @@ int main(int argc, char* argv[]) {
 	}
 	std::ofstream new_config(path_to_config);
 	new_config << config_document; //rapidxml_print.hpp
-
 	return EXIT_SUCCESS;
 }
