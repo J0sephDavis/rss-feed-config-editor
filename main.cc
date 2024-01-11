@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <ftxui/component/component_base.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <functional>
@@ -15,19 +16,16 @@ using namespace ftxui;
 namespace rx = rapidxml;
 class feed_entry {
 	public:
-		feed_entry(rx::xml_node<>& reference,
-				std::string _title,
-				std::string _fileName,
-				std::string _url,
-				std::string _regex,
-				std::string _history):
+		feed_entry(rx::xml_node<>& reference) :
 			xml_reference(reference)
 		{
-			this->title = _title;
-			this->fileName = _fileName;
-			this->regex = _regex;
-			this->history = _history;
-			this->url = _url;
+			log.trace("feed_entry constructor");
+			fileName = reference.first_node("feedFileName")->value();
+			title = reference.first_node("title")->first_node()->value();
+			regex = reference.first_node("expr")->value();
+			history = reference.first_node("history")->value();
+			url = reference.first_node("feed-url")->first_node()->value();
+			//
 			this->tmp_fileName = fileName;
 			this->tmp_title = title;
 			this->tmp_regex = regex;
@@ -90,6 +88,54 @@ class feed_entry {
 		//changed = true if any of the descriptors are updated
 		const rx::xml_node<>& xml_reference;
 };
+class feed_editor : public feed_entry, public ComponentBase {
+	public:
+		explicit feed_editor(feed_entry& entry,
+				int& menu_column,
+				int& menu_row): feed_entry(entry) {
+			log.trace("feed_editor constructor");
+			Add(Container::Vertical({
+				compose_line_item(
+					Input(&(entry.tmp_title), entry.g_title()),
+					Checkbox("Update?", (&entry.changed_title)),
+					Button("Reset", [&](){ (&entry)->r_title();}, resetBtnOpt), menu_column
+				),
+				compose_line_item(
+					Input(&(entry.tmp_fileName), entry.g_fileName()),
+					Checkbox("Update?", (&entry.changed_fileName)),
+					Button("Reset", [&](){ (&entry)->r_fileName();}, resetBtnOpt), menu_column
+				),
+				compose_line_item(
+					Input(&(entry.tmp_regex), entry.g_regex()),
+					Checkbox("Update?", (&entry.changed_regex)),
+					Button("Reset", [&](){ (&entry)->r_regex();}, resetBtnOpt), menu_column
+				),
+				compose_line_item(
+					Input(&(entry.tmp_history), entry.g_history()),
+					Checkbox("Update?", (&entry.changed_history)),
+					Button("Reset", [&](){ (&entry)->r_history();}, resetBtnOpt), menu_column
+				),
+				compose_line_item(
+					Input(&(entry.tmp_url), entry.g_url()),
+					Checkbox("Update?", (&entry.changed_url)),
+					Button("Reset", [&](){ (&entry)->r_url();}, resetBtnOpt), menu_column
+				),
+			}, &menu_row));
+		}
+	private:
+		const ButtonOption resetBtnOpt = ButtonOption::Ascii();
+		const ComponentDecorator line_item_decorator = Renderer(border);
+		Component compose_line_item(Component input_box,
+					Component checkbox, Component button,
+					int& menu_column) {
+			return Container::Horizontal({
+				input_box, checkbox, button
+			}, &menu_column) | line_item_decorator;
+		};
+};
+Component editor_comp (feed_entry& entry, int& menu_column, int& menu_row) {
+	return Make<feed_editor>(entry, menu_column, menu_row);
+}
 int main(void) {
 	const std::string path_to_config = "/home/sooth/Documents/Code/10-19/11/04 RSS-Feed config editor/data/rss-config.xml";
 	static rx::xml_document<> config_document;
@@ -106,21 +152,11 @@ int main(void) {
 	std::vector<feed_entry> entries;
 	entries.reserve(50); //if value is too low,
 			     //we waste time resizing the vector
-	for (auto entry_node = config_document.first_node()->first_node("item");
+	for (rx::xml_node<>* entry_node = config_document.first_node()->first_node("item");
 			entry_node;
 			entry_node = entry_node->next_sibling()) {
 		log.trace("<loop> store config data");
-		std::string fileName = entry_node->first_node("feedFileName")->value();
-		std::string title = entry_node->first_node("title")->first_node()->value();
-		std::string regex = entry_node->first_node("expr")->value();
-		std::string history = entry_node->first_node("history")->value();
-		std::string url = entry_node->first_node("feed-url")->first_node()->value();
-		entries.emplace_back(*entry_node,
-			title,
-			fileName,
-			url,
-			regex,
-			history);
+		entries.emplace_back(*entry_node);
 		log.debug("New entry:" + entries.back().str());
 	}
 	// create each tab
@@ -132,46 +168,11 @@ int main(void) {
 	const auto resetBtnOpt = ButtonOption::Ascii();
 	const ComponentDecorator line_item_decorator = Renderer(border);
 	for (auto& entry : entries) {
-		auto create_line_item = [&](Component input_box,
-				Component checkbox,
-				Component button) -> Component {
-			return Container::Horizontal({
-				input_box, checkbox, button
-				//Input(&(entry.tmp_title), entry.g_title()),
-				//Checkbox("Update?", (&entry.changed_title)),
-				//Button("Reset", [&](){ (&entry)->r_title();},
-				//		resetBtnOpt),
-			}, &editor_menu_column) | line_item_decorator;
-		};
-		log.trace("<loop> create tab");
-		Component return_value = Container::Vertical({
-			create_line_item(
-				Input(&(entry.tmp_title), entry.g_title()),
-				Checkbox("Update?", (&entry.changed_title)),
-				Button("Reset", [&](){ (&entry)->r_title();}, resetBtnOpt)
-			),
-			create_line_item(
-				Input(&(entry.tmp_fileName), entry.g_fileName()),
-				Checkbox("Update?", (&entry.changed_fileName)),
-				Button("Reset", [&](){ (&entry)->r_fileName();}, resetBtnOpt)
-			),
-			create_line_item(
-				Input(&(entry.tmp_regex), entry.g_regex()),
-				Checkbox("Update?", (&entry.changed_regex)),
-				Button("Reset", [&](){ (&entry)->r_regex();}, resetBtnOpt)
-			),
-			create_line_item(
-				Input(&(entry.tmp_history), entry.g_history()),
-				Checkbox("Update?", (&entry.changed_history)),
-				Button("Reset", [&](){ (&entry)->r_history();}, resetBtnOpt)
-			),
-			create_line_item(
-				Input(&(entry.tmp_url), entry.g_url()),
-				Checkbox("Update?", (&entry.changed_url)),
-				Button("Reset", [&](){ (&entry)->r_url();}, resetBtnOpt)
-			),
-		}, &editor_menu_row);
-		tab_data.push_back(std::move(return_value));
+		log.trace("<loop> add tab");
+		tab_data.push_back(std::move(
+			editor_comp(entry,
+				editor_menu_column, editor_menu_row))
+		);
 		tab_menu_entries.push_back(entry.g_title());
 	}
 	// create the final tab (adds a new row)
