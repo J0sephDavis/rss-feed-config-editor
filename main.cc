@@ -186,7 +186,6 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	if (path_to_config.extension() != ".xml")
 		exit(EXIT_FAILURE);
-//	const std::string path_to_config = "/home/sooth/Documents/Code/10-19/11/04 RSS-Feed config editor/data/rss-config.xml";
 	static rx::xml_document<> config_document;
 	static rx::file<> config_file(path_to_config);
 	try {
