@@ -180,6 +180,8 @@ Component new_editor_comp (config_fields& field_data, int& menu_row) {
 int main(int argc, char* argv[]) {
 	if (argc < 1) exit(EXIT_FAILURE);
 	std::filesystem::path path_to_config(argv[1]);
+	if (!std::filesystem::exists(path_to_config))
+		exit(EXIT_FAILURE);
 	if (!path_to_config.has_extension())
 		exit(EXIT_FAILURE);
 	if (path_to_config.extension() != ".xml")
