@@ -77,22 +77,20 @@ class config_entry {
 			return xml_reference;
 		}
 	public: //other
-		//tmp_xxx are used to update values
 		config_fields changed_entry;
 		bool update_fileName = false;
 		bool update_title = false;
 		bool update_regex = false;
 		bool update_history = false;
 		bool update_url = false;
+		bool delete_entry = false;
 	private: //DESCRIPTORS
 		const rx::xml_node<>& xml_reference;
 		config_fields original_entry;
 };
 class feed_editor : public ComponentBase {
 public:
-	explicit feed_editor(config_entry& entry,
-			int& menu_column,
-			int& menu_row)  {
+	explicit feed_editor(config_entry& entry)  {
 		log.trace("feed_editor constructor");
 		Add(Container::Vertical({
 			compose_line_item(
@@ -130,6 +128,7 @@ public:
 				Button("Reset", [&](){ (&entry)->r_url();},
 					resetBtnOpt), menu_column
 			),
+			Checkbox("Delete entry?", &entry.delete_entry),
 		}, &menu_row));
 	}
 private:
@@ -144,10 +143,12 @@ private:
 			input_box, checkbox, button
 		}, &menu_column) | line_item_decorator;
 	};
+	int menu_row = 0;
+	int menu_column = 0;
 };
 class new_feed_editor : public ComponentBase {
 public:
-	explicit new_feed_editor(config_fields& entry_ref, int& menu_row):
+	explicit new_feed_editor(config_fields& entry_ref):
 		entry_contents(entry_ref){
 		log.trace("new_feed_editor constructor");
 		Add(Container::Vertical({
@@ -162,20 +163,14 @@ public:
 	config_fields& entry_contents;
 private:
 	const ComponentDecorator line_item_decorator = Renderer(border);
-	Component compose_line_item(Component input_box,
-				Component checkbox, Component button,
-				int& menu_column) {
-		return Container::Horizontal({
-			input_box, checkbox, button
-		}, &menu_column) | line_item_decorator;
-	};
+	int menu_row = 0;
 };
 //to create components from out component classes
-Component editor_comp (config_entry& entry, int& menu_column, int& menu_row) {
-	return Make<feed_editor>(entry, menu_column, menu_row);
+Component editor_comp (config_entry& entry) {
+	return Make<feed_editor>(entry);
 }
-Component new_editor_comp (config_fields& field_data, int& menu_row) {
-	return Make<new_feed_editor>(field_data, menu_row);
+Component new_editor_comp (config_fields& field_data) {
+	return Make<new_feed_editor>(field_data);
 }
 int main(int argc, char* argv[]) {
 	if (argc < 2) exit(EXIT_FAILURE);
@@ -216,8 +211,7 @@ int main(int argc, char* argv[]) {
 	for (auto& entry : cfg_entries) {
 		log.trace("<loop> add tab");
 		tab_data.push_back(std::move(
-			editor_comp(entry,
-				editor_menu_column, editor_menu_row))
+			editor_comp(entry))
 		);
 		tab_menu_entries.push_back(entry.g_title());
 	}
@@ -233,8 +227,7 @@ int main(int argc, char* argv[]) {
 	std::function<void()> newfunc([&]{
 		log.trace(">new_func");
 		added_configs.push_back(new config_fields);
-		tab_data.emplace_back(new_editor_comp(*(added_configs.back()),
-					editor_menu_row));	
+		tab_data.emplace_back(new_editor_comp(*(added_configs.back())));	
 		tabs->Detach(); //Remove from the main_component interaction hierarchy
 		tabs = Container::Tab(tab_data, &tab_selector);
 		main_component->Add(tabs); //add to the main_component interaction hierarchy
@@ -305,7 +298,17 @@ int main(int argc, char* argv[]) {
 	//
 	for (auto& entry : cfg_entries) {
 		log.trace("<loop> check entry for change");
+		log.debug("delete entry? " + std::string(
+					(entry.delete_entry?"true":"false")));
 		auto& node = entry.g_xmlRef();
+		if (entry.delete_entry) {
+			log.trace("deleting entry");
+			config_document.first_node()->remove_node(
+				node.first_node()->parent()
+			);
+			log.trace("DELETED: " + entry.g_title());
+			continue;
+		}
 		if (entry.update_fileName) {
 			log.info("updating fileName (" + entry.g_fileName()
 					+ ") -> ("
