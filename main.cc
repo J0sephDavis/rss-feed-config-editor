@@ -129,6 +129,8 @@ public:
 private:
 	const ButtonOption resetBtnOpt = ButtonOption::Ascii();
 	const ComponentDecorator line_item_decorator = Renderer(border);
+	//TODO make this more general, stop accepting components
+	//instead, build them in the function.
 	Component compose_line_item(Component input_box,
 				Component checkbox, Component button,
 				int& menu_column) {
@@ -234,12 +236,12 @@ int main(void) {
 			tabs
 	});
 	//the final rendered component
-	auto x =  Renderer(main_component, [&](){
+	auto main_renderer =  Renderer(main_component, [&](){
 		return hbox({
 			vbox({
-			tab_menu->Render(),
-			separator(),
-			add_config_button->Render(),
+				tab_menu->Render(),
+				separator(),
+				add_config_button->Render(),
 			}),
 			separator(),
 			tabs->Render(),
@@ -255,7 +257,7 @@ int main(void) {
 		else return false;
 	});
 	log.trace("SCREEN LOOP");
-	screen.Loop(x);
+	screen.Loop(main_renderer);
 	bool config_changed = false;
 	for (auto& entry : cfg_entries) {
 		log.trace("<loop> check entry for change");
