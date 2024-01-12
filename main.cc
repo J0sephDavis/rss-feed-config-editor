@@ -162,7 +162,6 @@ public:
 	}
 	config_fields& entry_contents;
 private:
-	const ComponentDecorator line_item_decorator = Renderer(border);
 	int menu_row = 0;
 };
 //to create components from out component classes
